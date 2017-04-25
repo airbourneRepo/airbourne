@@ -1,7 +1,7 @@
 #!/bin/bash
 
 airodump_global() {
-	if airodump-ng --write sendme --output-format csv mon0 2>&1
+	if airodump-ng --write sendme --output-format csv mon0
 	then
 		exit 0
 	else
@@ -10,7 +10,7 @@ airodump_global() {
 }
 
 airodump_channel() {
-	if airodump-ng -c $1 --write sendme --output-format csv mon0 2>&1 
+	if airodump-ng -c $1 --write sendme --output-format csv mon0 
 	then
 		exit 0
 	else

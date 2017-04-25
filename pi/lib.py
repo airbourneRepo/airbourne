@@ -39,8 +39,8 @@ def connectToServer(ip_address):
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	if sock == 0:
 		logHandler("ERROR", "Could not create socket")
-	sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
-	print >>sys.stderr, 'connecting to %s' % ip_address
+		sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
+		print >>sys.stderr, 'connecting to %s' % ip_address
 	try:
 		sock.connect((ip_address, PORT))
 	except socket.error:
@@ -57,16 +57,16 @@ def connectToServer(ip_address):
 def initConnection():
 	global lock 
 	lock = Lock()
-
+	print(createHello())
 	sock.sendall(createHello()) 
 
 	#receives messages after sending hello to GCS.
 	while True:
 		data = sock.recv(1024)
 		if data == 0:
-				logHandler("ERROR", "Connection lost while waiting for hello response")
-				closeConnection()
-				return #to airbourne.py in connecting-loop
+			logHandler("ERROR", "Connection lost while waiting for hello response")
+			closeConnection()
+			return #to airbourne.py in connecting-loop
 		parsed_json = json.loads(data)
 		print data
 		#checks if it has received a response message. if not, than wait again
@@ -75,8 +75,8 @@ def initConnection():
 			continue
 		else:  
 			while True:
-					data = sock.recv(1024)
-					print data
+				data = sock.recv(1024)
+				print data
 				#if data == SIGINT:
 				#	logHandler("ERROR", "Connection lost while waiting for packets")
 				#	closeConnection()
@@ -136,7 +136,7 @@ def monitoreHandler(parsed_json):
 			p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
 			for line in p.stdout:
    				jsonString = {
-   							'airmon stop' : line,
+   					'airmon stop' : line,
    				}
    				#sock.sendall(json.dumps(jsonString) + '\0')
    				print jsonString
@@ -146,10 +146,10 @@ def monitoreHandler(parsed_json):
 			cmd = ['./airmon-ng.sh']
 			p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
 			for line in p.stdout:
-   				jsonString = {
-   							'airmon start' : line,
+  				jsonString = {
+   					'airmon start' : line,
    				}
-   				sock.sendall(json.dumps(jsonString) + '\0')
+   				#sock.sendall(json.dumps(jsonString) + '\0')
    				print jsonString
 			p.wait()
 		
@@ -166,15 +166,17 @@ def dumpHandler(parsed_json):
 	global dumpThread
 	global pill2kill
 
+	print "trying to start sendDattrying to start sendDataa"
+
 	#just start sendData-thread if Command-Key ist "START" and there are no inctances running yet
-	if parsed_json['Command'] == START and threading.active_count() == 0:
+	if parsed_json['Command'] == START: #and threading.active_count() == 0:
 		pill2kill = threading.Event()
 		dumpThread = threading.Thread(target=sendData, args=(pill2kill, parsed_json['Channel'],))
 		dumpThread.start()
 		return
 
 	#just process the commands below if there is running 1 inctance of sendData-thread
-	elif parsed_json['Command'] == STOP and threading.active_count() == 1:
+	elif parsed_json['Command'] == STOP:#  and threading.active_count() == 1:
 		pill2kill.set()
    		dumpThread.join()
 		return
@@ -189,27 +191,30 @@ def dumpHandler(parsed_json):
 # send further packets. 										  #
 ###################################################################
 def sendData(stop_event,channel):
+	print "trying to send data"
 	#check if file was already created in an old run 
-	if os.path.exists('sendme-01.csv'):
-		os.system('rm sendme-01.csv')
+	if os.path.exists('./sendme-01.csv'):
+		os.system('rm -f sendme-01.csv')
 
 	#check if airodump should be started to list beacons of every channel
+	print "trying to run airodump"
 	if channel != 0:
 		cmd = ['./airodump-ng.sh', str(channel)]
-
+	
 	#or rather of specific ones
 	elif channel == 0:
 		cmd = ['./airodump-ng.sh']
 	p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
 	
+	print "waiting for csv"
 	#waiting for airodump to create the csv file
 	while True:
-		if os.path.exists('sendme-01.csv'):
+		if os.path.exists('./sendme-01.csv'):
 			break
 
 	#open csv in read-mode ans read line by line
 	while True: 
-		fd = open('sendme-01.csv', 'r')
+		fd = open('./sendme-01.csv', 'r')
 		count = 0
 
 		for line in fd:
@@ -217,10 +222,11 @@ def sendData(stop_event,channel):
 			if count == 0:
 				count = count + 1
 				continue
-
+			print "before lockk"
 			#locked as long GCD send an ok which means last information received
 			#will be set free in airbourne.py 
 			lock.acquire() 
+			print "free lock"
 			#if first line is send as head-packet which GCD needs
 			#to properly presenting the captured dump. 
 			if count == 1:

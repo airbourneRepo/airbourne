@@ -25,7 +25,7 @@ ERROR_MSG = 255
 
 START = "start"
 STOP = "stop"
-PORT = 1337
+PORT = 3333
 
 
 ##############################
@@ -34,23 +34,23 @@ PORT = 1337
 def createHello():
 	jsonString = { 
 				'Type': HELLO_MSG,
-	 			'SourceAddress' : netifaces.ifaddresses('enp4s0')[AF_INET][0]['addr'], #iface of PI
+	 			'SourceAddress' : netifaces.ifaddresses('wlan0')[AF_INET][0]['addr'], #iface of PI
 	} 
-	return json.dumps(jsonString)#+'\0'
+	return json.dumps(jsonString)+'\0'
 
 def createData(line):
 	jsonString = {
 		   		'Type' : DATA_MSG,
 		   		'Data' : line,
 	}
-	return json.dumps(jsonString)#+'\0'
+	return json.dumps(jsonString)+'\0'
 
 def createHead(line):
 	jsonString = {
 				'Type' : HEAD_MSG,
 			   	'Data' : line,
 	}
-	return json.dumps(jsonString)#+'\0'
+	return json.dumps(jsonString)+'\0'
 
 
 
@@ -67,7 +67,7 @@ def createResponse():
 				'Type' : RESP_MSG,
 				'SourceAddress' : '122.122.122.122',
 	}
-	return json.dumps(jsonString)#+'\0'
+	return json.dumps(jsonString)+'\0'
 
 def createMonitore(command):
 	jsonString = {
